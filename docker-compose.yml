@@ -65,6 +65,7 @@ services:
 
 volumes:
   postgres-db-volume:
+  prometheus-data-volume:
 
 networks:
   exchange-backend:

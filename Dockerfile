@@ -4,5 +4,5 @@ COPY . /app
 RUN mvn clean install
 
 FROM eclipse-temurin:17.0.2_8-jre-alpine
-COPY --from=build /app/application/target/*.jar /exchange.jar
+COPY --from=build /app/gateway/target/*.jar /exchange.jar
 CMD ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/exchange.jar"]

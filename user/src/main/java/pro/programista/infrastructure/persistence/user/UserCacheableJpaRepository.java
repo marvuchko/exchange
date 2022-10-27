@@ -6,7 +6,10 @@ import pro.programista.domain.repository.DomainRepository;
 import pro.programista.domain.repository.UserRepository;
 import pro.programista.domain.service.Cache;
 
-public class UserCacheableJpaRepository extends DomainRepository.CacheableRepository<UUID, User> implements UserRepository {
+public class UserCacheableJpaRepository
+    extends DomainRepository.CacheableRepository<UUID, User>
+    implements UserRepository {
+
   public UserCacheableJpaRepository(
       Cache<UUID, User> cache,
       DomainRepository<UUID, User> delegate
