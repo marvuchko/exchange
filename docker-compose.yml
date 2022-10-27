@@ -11,10 +11,10 @@ services:
       - ${DB_PORT:-5432}:5432
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
     environment:
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-exchange}
-      - POSTGRES_USER=${DB_USERNAME:-exchange}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-exchange_pass}
+      - POSTGRES_USER=${DB_USERNAME:-exchange_user}
       - POSTGRES_DB=${DB_NAME:-exchange_db}
     restart: unless-stopped
     networks:
@@ -30,16 +30,36 @@ services:
     ports:
       - ${APPLICATION_PORT:-8081}:8081
     environment:
-      - DB_URL=${DB_URL:-postgres-db}
-      - DB_PORT=${DB_PORT:-5432}
-      - DB_NAME=${DB_NAME:-exchange_db}
-      - DB_SCHEMA=${DB_SCHEMA:-core}
-      - DB_USERNAME=${DB_USERNAME:-exchange}
-      - DB_PASSWORD=${DB_PASSWORD:-exchange}
+      # User Datasource
+      - user.datasource.jdbcUrl=jdbc:postgresql://postgres-db:5432/exchange_db?currentSchema=user
+      - user.datasource.username=exchange_user
+      - user.datasource.password=exchange_pass
+      # Wallet Datasource
+      - wallet.datasource.jdbcUrl=jdbc:postgresql://postgres-db:5432/exchange_db?currentSchema=wallet
+      - wallet.datasource.username=exchange_user
+      - wallet.datasource.password=exchange_pass
     depends_on:
       - postgres-db
     links:
       - postgres-db
+    networks:
+      - exchange-backend
+
+  prometheus:
+    image: prom/prometheus:v2.36.2
+    container_name: prometheus-container
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data-volume:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - ${PROMETHEUS_PORT:-9090}:9090
+    restart: unless-stopped
+    links:
+      - exchange-server
+    depends_on:
+      - exchange-server
     networks:
       - exchange-backend
 

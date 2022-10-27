@@ -11,4 +11,21 @@
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>pro.programista</groupId>
+            <artifactId>common</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
 </project>
