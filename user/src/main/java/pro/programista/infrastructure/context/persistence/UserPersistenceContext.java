@@ -5,10 +5,12 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.PostConstruct;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.flywaydb.core.Flyway;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
@@ -20,6 +22,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import pro.programista.domain.entity.User;
 import pro.programista.domain.event.DomainEventBus;
 import pro.programista.domain.repository.UserRepository;
@@ -37,6 +40,7 @@ import pro.programista.infrastructure.persistence.user.UserJpaRepository;
     transactionManagerRef = UserBeanConstants.TRANSACTION_MANAGER,
     basePackageClasses = UserJpaRepository.class
 )
+@EnableTransactionManagement
 @EqualsAndHashCode(callSuper = true)
 @Configuration(UserBeanConstants.USER_PERSISTENCE)
 @ConfigurationProperties(prefix = "user.datasource")
@@ -49,12 +53,13 @@ public class UserPersistenceContext extends HikariConfig {
   }
 
   @Primary
-  @Bean(UserBeanConstants.USER_ENTITY_MANAGER)
+  @Bean(value = UserBeanConstants.USER_ENTITY_MANAGER)
   public LocalContainerEntityManagerFactoryBean entityManager(
       @Qualifier(UserBeanConstants.USER_DATA_SOURCE) DataSource dataSource,
       EntityManagerFactoryBuilder factoryBuilder,
       Environment environment
   ) {
+    migrate(dataSource);
 
     Map<String, String> properties = new HashMap<>();
     properties.put("hibernate.dialect", environment.getProperty("user.datasource.dialect"));
@@ -75,7 +80,7 @@ public class UserPersistenceContext extends HikariConfig {
     return new JpaTransactionManager(entityManagerFactory);
   }
 
-  @Bean(UserBeanConstants.USER_REPOSITORY)
+  @Bean(value = UserBeanConstants.USER_REPOSITORY)
   public UserRepository userRepository(
       @Qualifier(UserBeanConstants.CACHE) Cache<UUID, User> cache,
       UserJpaRepository userJpaRepository
@@ -87,6 +92,15 @@ public class UserPersistenceContext extends HikariConfig {
   @Bean(UserBeanConstants.USER_SERVICE)
   public UserService userServiceService(UserRepository userRepository, DomainEventBus eventBus) {
     return new UserServiceImpl(userRepository, eventBus);
+  }
+
+  public void migrate(DataSource dataSource) {
+    Flyway.configure()
+        .schemas("user")
+        .locations("classpath:db/migration/user")
+        .dataSource(dataSource)
+        .load()
+        .migrate();
   }
 
 }

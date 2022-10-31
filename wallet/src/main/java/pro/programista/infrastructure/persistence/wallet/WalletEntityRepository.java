@@ -11,8 +11,8 @@ import pro.programista.domain.entity.Wallet;
 import pro.programista.domain.primitives.PageResult;
 import pro.programista.domain.repository.WalletRepository;
 import pro.programista.domain.value.Balance;
-import pro.programista.domain.value.Currency;
-import pro.programista.domain.value.CurrencyPair;
+import pro.programista.domain.value.WalletCurrency;
+import pro.programista.domain.value.WalletCurrencyPair;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -63,10 +63,10 @@ public class WalletEntityRepository implements WalletRepository {
     wallet.setId(entity.getId());
 
     var balance = new Balance(entity.getBalance());
-    var currency = new Currency(entity.getCurrency());
-    var currencyPair = new CurrencyPair(currency, balance);
+    var currency = new WalletCurrency(entity.getWalletCurrency().name());
+    var currencyPair = new WalletCurrencyPair(currency, balance);
 
-    wallet.setCurrencyPair(currencyPair);
+    wallet.setWalletCurrencyPair(currencyPair);
     return wallet;
   }
 
@@ -74,8 +74,9 @@ public class WalletEntityRepository implements WalletRepository {
     var entity = new WalletJpaEntity();
 
     entity.setId(wallet.getId());
-    entity.setBalance(wallet.getCurrencyPair().balance().value());
-    entity.setCurrency(wallet.getCurrencyPair().currency().currency());
+    entity.setBalance(wallet.getWalletCurrencyPair().balance().value());
+    entity.setWalletCurrency(
+        pro.programista.infrastructure.persistence.wallet.WalletCurrency.valueOf(wallet.getWalletCurrencyPair().walletCurrency().currency()));
 
     return entity;
   }
